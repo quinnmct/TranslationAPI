@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +10,8 @@ using System.Text;
 using System.Threading;
 using System.Web;
 using System.Web.Http;
+using TranslationAPI_Test.Controllers;
+using System.Media;
 
 namespace TranslationAPI.Controllers
 {
@@ -18,27 +20,21 @@ namespace TranslationAPI.Controllers
         AdmAuthentication admAuth = new AdmAuthentication
         ("vernaculatetranslate", "LqLdkBdQ+I/DasFZ6EKBRKvlxmaTlBQPcWKV4Srs3eQ=");
 
-        // GET api/values
-        public string Get()
+        // GET returns access token in case the client needs to make a call to MicrosoftTranslator
+        public AdmAccessToken Get()
         {
-            return "undefined Get()";
+            return admAuth.GetAccessToken();
         }
 
-        // GET api/values/5
-        public string Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
-        //POST the 'untranslated' from client, return the translated string
-        public string Post([FromBody]untranslated u)
+        //POST receives the 'untranslated' from client, returns a translated object
+        public translated Post([FromBody]translated u)
         {
             AdmAccessToken admToken = admAuth.GetAccessToken();
             string text = u.value;
             string from = "en";
             string to = u.lang;
             string translation;
+            GlosbeObject glosbe;
 
             string uri = "http://api.microsofttranslator.com/v2/Http.svc/Translate?text=" + System.Web.HttpUtility.UrlEncode(text) +
                          "&from=" + from + "&to=" + to;
@@ -63,7 +59,47 @@ namespace TranslationAPI.Controllers
                 Console.WriteLine(e.ToString());
                 translation = "not found";
             }
-            return translation;
+            int numOfWords = translation.Split(' ').Length;
+            translated t = new translated(translation, to, numOfWords);
+            //t.value = translation;
+            //t.lang = to;
+            string[] words = translation.Split(' ');
+            for (int i = 0; i < words.Length; i++)
+            {
+                word temp;
+                //string textToDetect = "Hola";
+                //Keep appId parameter blank as we are sending access token in authorization header.
+                uri = "http://glosbe.com/gapi/translate?from=" + to + "&dest=eng&format=json&phrase=" + words[i] + "&page=1&pretty=true";
+                httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
+                httpWebRequest.Headers.Add("Authorization", authToken);
+                response = null;
+                try
+                {
+                     response = httpWebRequest.GetResponse();
+                     using (Stream stream = response.GetResponseStream())
+                     {
+                         DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(GlosbeObject));
+                         //Get deserialized object from JSON stream
+                         glosbe = (GlosbeObject)serializer.ReadObject(response.GetResponseStream());    
+                     }
+                }
+                catch(FileNotFoundException e)
+                {
+                  throw e;
+                }
+                if (glosbe.tuc == null)
+                {
+                    temp = new word(words[i], "no definition");
+                }
+                else
+                {
+                    temp = new word(words[i], glosbe.from);
+                }
+
+                t.words[i] = temp;
+            }
+
+            return t;
         }
 
         // PUT api/values/5
@@ -77,18 +113,62 @@ namespace TranslationAPI.Controllers
         }
     }
 
-    public class untranslated
+    public class translated
     {
+        public translated(string translation, string to, int numOfWords)
+        {
+            value = translation;
+            lang = to;
+            words = new word[numOfWords];
+        }
         public string value { get; set; }
         public string lang { get; set; }
+        public word[] words { get; set; }
+        //public Stream speak { get; set; }
+    }
+    public class word
+    {
+        public word(string _theWord, string lang)
+        {
+            theWord = _theWord;
+            definition = lang;
+        }
+
+        public string theWord;
+        public string definition;
+
+    }
+    [DataContract]
+    public class GlosbeObject
+    {
+        [DataMember]
+        public GlosbePhraseArr[] tuc = new GlosbePhraseArr[5];
+        [DataMember]
+        public string from { get; set; }
+    }
+    [DataContract]
+    public class GlosbePhraseArr
+    {
+        [DataMember]
+        public GlosbePhrase phrase { get; set; }
+        [DataMember]
+        public string meaningID { get; set; }
+    }
+    [DataContract]
+    public class GlosbePhrase
+    {
+        public string text { get; set; }
     }
 
+    /// <summary>
+    /// microsoft translator access token class below
+    /// </summary>
     class Program
     {
         private static void DetectMethod(string authToken)
         {
             Console.WriteLine("Enter Text to detect language:");
-            string textToDetect = Console.ReadLine();
+            string textToDetect = "Hola";
             //Keep appId parameter blank as we are sending access token in authorization header.
             string uri = "http://api.microsofttranslator.com/v2/Http.svc/Detect?text=" + textToDetect;
             HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
