@@ -100,9 +100,6 @@ namespace TranslationAPI.Controllers
 
                 t.words[i] = temp;
             }
-            //temp for language names//
-
-            ///////////////////////////
             return t;
         }
 
