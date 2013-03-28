@@ -69,7 +69,9 @@ namespace TranslationAPI.Controllers
                 word temp;
                 //string textToDetect = "Hola";
                 //Keep appId parameter blank as we are sending access token in authorization header.
-                uri = "http://glosbe.com/gapi/translate?from=" + to + "&dest=eng&format=json&phrase=" + words[i] + "&page=1&pretty=true";
+                //strong contender: http://www.google.com/dictionary/json?callback=dict_api.callbacks.id100&q=die&sl=en&tl=en&client=en
+                uri = "http://glosbe.com/gapi/translate?from=" + to + "&dest=eng&format=json&phrase=" + words[i] + "&page=1&pretty=true"+
+                      "&apiKey=2b8dgjkaeu5u57ebmfcbjwu5ior97ubq";
                 httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
                 httpWebRequest.Headers.Add("Authorization", authToken);
                 response = null;
@@ -98,7 +100,9 @@ namespace TranslationAPI.Controllers
 
                 t.words[i] = temp;
             }
+            //temp for language names//
 
+            ///////////////////////////
             return t;
         }
 
@@ -120,11 +124,36 @@ namespace TranslationAPI.Controllers
             value = translation;
             lang = to;
             words = new word[numOfWords];
+            setLangName(to);
         }
         public string value { get; set; }
         public string lang { get; set; }
+        public string langName { get; set;}
         public word[] words { get; set; }
         //public Stream speak { get; set; }
+        void setLangName(string t)
+        {
+            switch (t)
+            {
+                case "ar":langName = "Arabic"; break;
+                case "bg":langName ="Bulgarian"; break;
+                case "da":langName ="Danish"; break;
+                case "nl":langName ="Dutch"; break;
+                case "en":langName ="English"; break;
+                case "fr":langName ="French"; break;
+                case "de":langName ="German"; break;
+                case "hi":langName ="Hindi"; break;
+                case "it":langName ="Italian"; break;
+                case "ja":langName ="Japanese"; break;
+                case "ko":langName ="Korean"; break;
+                case "pt":langName ="Portuguese"; break;
+                case "ru":langName ="Russian"; break;
+                case "es":langName ="Spanish"; break;
+                case "sv":langName ="Swedish"; break;
+                case "th":langName ="Thai"; break;
+                case "tr":langName ="Turkish"; break;
+            }
+        }
     }
     public class word
     {
@@ -142,7 +171,7 @@ namespace TranslationAPI.Controllers
     public class GlosbeObject
     {
         [DataMember]
-        public GlosbePhraseArr[] tuc = new GlosbePhraseArr[5];
+        public GlosbePhraseArr[] tuc = new GlosbePhraseArr[10];
         [DataMember]
         public string from { get; set; }
     }
