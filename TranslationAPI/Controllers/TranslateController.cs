@@ -10,9 +10,9 @@ using System.Text;
 using System.Threading;
 using System.Web;
 using System.Web.Http;
-using TranslationAPI_Test.Controllers;
+using TranslationAPI.Controllers;
 using System.Media;
-
+using Newtonsoft.Json;
 namespace TranslationAPI.Controllers
 {
     public class TranslateController : ApiController
@@ -24,6 +24,7 @@ namespace TranslationAPI.Controllers
         public AdmAccessToken Get()
         {
             return admAuth.GetAccessToken();
+            //return "string works";
         }
 
         //POST receives the 'untranslated' from client, returns a translated object
@@ -34,7 +35,7 @@ namespace TranslationAPI.Controllers
             string from = "en";
             string to = u.lang;
             string translation;
-            GlosbeObject glosbe;
+            string tempTranslation;
 
             string uri = "http://api.microsofttranslator.com/v2/Http.svc/Translate?text=" + System.Web.HttpUtility.UrlEncode(text) +
                          "&from=" + from + "&to=" + to;
@@ -50,8 +51,6 @@ namespace TranslationAPI.Controllers
                 {
                     System.Runtime.Serialization.DataContractSerializer dcs = new System.Runtime.Serialization.DataContractSerializer(Type.GetType("System.String"));
                     translation = (string)dcs.ReadObject(stream);
-                    Console.WriteLine("Translation for source text '{0}' from {1} to {2} is", text, "en", "de");
-                    Console.WriteLine(translation);
                 }
             }
             catch (InvalidCastException e)
@@ -59,45 +58,31 @@ namespace TranslationAPI.Controllers
                 Console.WriteLine(e.ToString());
                 translation = "not found";
             }
+
+            //Translate each word back into english, reveals the broken down structure of each language.
             int numOfWords = translation.Split(' ').Length;
             translated t = new translated(translation, to, numOfWords);
-            //t.value = translation;
-            //t.lang = to;
             string[] words = translation.Split(' ');
             for (int i = 0; i < words.Length; i++)
             {
                 word temp;
-                //string textToDetect = "Hola";
-                //Keep appId parameter blank as we are sending access token in authorization header.
-                //strong contender: http://www.google.com/dictionary/json?callback=dict_api.callbacks.id100&q=die&sl=en&tl=en&client=en
-                uri = "http://glosbe.com/gapi/translate?from=" + to + "&dest=eng&format=json&phrase=" + words[i] + "&page=1&pretty=true"+
-                      "&apiKey=2b8dgjkaeu5u57ebmfcbjwu5ior97ubq";
+                uri = "http://api.microsofttranslator.com/v2/Http.svc/Translate?text=" + System.Web.HttpUtility.UrlEncode(words[i]) +
+                      "&from=" + to + "&to=" + from; //swapped b.c translating back
                 httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
                 httpWebRequest.Headers.Add("Authorization", authToken);
                 response = null;
                 try
                 {
-                     response = httpWebRequest.GetResponse();
-                     using (Stream stream = response.GetResponseStream())
-                     {
-                         DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(GlosbeObject));
-                         //Get deserialized object from JSON stream
-                         glosbe = (GlosbeObject)serializer.ReadObject(response.GetResponseStream());    
-                     }
+                    response = httpWebRequest.GetResponse();
+                    using (Stream stream = response.GetResponseStream())
+                    {
+                        System.Runtime.Serialization.DataContractSerializer dcs = new System.Runtime.Serialization.DataContractSerializer(Type.GetType("System.String"));
+                        tempTranslation = (string)dcs.ReadObject(stream);
+                    }
                 }
-                catch(FileNotFoundException e)
-                {
-                  throw e;
-                }
-                if (glosbe.tuc == null)
-                {
-                    temp = new word(words[i], "no definition");
-                }
-                else
-                {
-                    temp = new word(words[i], glosbe.from);
-                }
+                catch (InvalidCastException e) {tempTranslation = "not found: "+e.ToString();}
 
+                temp = new word(words[i], tempTranslation);
                 t.words[i] = temp;
             }
             return t;
@@ -116,6 +101,11 @@ namespace TranslationAPI.Controllers
 
     public class translated
     {
+        public string value { get; set; }
+        public string lang { get; set; }
+        public string langName { get; set; }
+        public word[] words { get; set; }
+        public Boolean canSpeak { get; set; }
         public translated(string translation, string to, int numOfWords)
         {
             value = translation;
@@ -123,32 +113,32 @@ namespace TranslationAPI.Controllers
             words = new word[numOfWords];
             setLangName(to);
         }
-        public string value { get; set; }
-        public string lang { get; set; }
-        public string langName { get; set;}
-        public word[] words { get; set; }
-        //public Stream speak { get; set; }
         void setLangName(string t)
         {
             switch (t)
             {
-                case "ar":langName = "Arabic"; break;
-                case "bg":langName ="Bulgarian"; break;
-                case "da":langName ="Danish"; break;
-                case "nl":langName ="Dutch"; break;
-                case "en":langName ="English"; break;
-                case "fr":langName ="French"; break;
-                case "de":langName ="German"; break;
-                case "hi":langName ="Hindi"; break;
-                case "it":langName ="Italian"; break;
-                case "ja":langName ="Japanese"; break;
-                case "ko":langName ="Korean"; break;
-                case "pt":langName ="Portuguese"; break;
-                case "ru":langName ="Russian"; break;
-                case "es":langName ="Spanish"; break;
-                case "sv":langName ="Swedish"; break;
-                case "th":langName ="Thai"; break;
-                case "tr":langName ="Turkish"; break;
+                case "ar": canSpeak = false; langName = "Arabic"; break;
+                case "bg": canSpeak = false; langName = "Bulgarian"; break;
+                case "ca": canSpeak = true; langName = "Catalan"; break;
+                case "zh-cn": canSpeak = true; langName = "Chinese"; break;
+                case "da": canSpeak = true; langName = "Danish"; break;
+                case "nl": canSpeak = true; langName = "Dutch"; break;
+                case "en": canSpeak = true; langName = "English"; break;
+                case "fi": canSpeak = true; langName = "Finnish"; break;
+                case "fr": canSpeak = true; langName = "French"; break;
+                case "de": canSpeak = true; langName = "German"; break;
+                case "hi": canSpeak = false; langName = "Hindi"; break;
+                case "it": canSpeak = true; langName = "Italian"; break;
+                case "ja": canSpeak = true; langName = "Japanese"; break;
+                case "ko": canSpeak = true; langName = "Korean"; break;
+                case "no": canSpeak = true; langName = "Norwegian"; break;
+                case "pl": canSpeak = true; langName = "Polish"; break;
+                case "pt": canSpeak = true; langName = "Portuguese"; break;
+                case "ru": canSpeak = true; langName = "Russian"; break;
+                case "es": canSpeak = true; langName = "Spanish"; break;
+                case "sv": canSpeak = true; langName = "Swedish"; break;
+                case "th": canSpeak = false; langName = "Thai"; break;
+                case "tr": canSpeak = false; langName = "Turkish"; break;
             }
         }
     }
@@ -164,31 +154,8 @@ namespace TranslationAPI.Controllers
         public string definition;
 
     }
-    [DataContract]
-    public class GlosbeObject
-    {
-        [DataMember]
-        public GlosbePhraseArr[] tuc = new GlosbePhraseArr[10];
-        [DataMember]
-        public string from { get; set; }
-    }
-    [DataContract]
-    public class GlosbePhraseArr
-    {
-        [DataMember]
-        public GlosbePhrase phrase { get; set; }
-        [DataMember]
-        public string meaningID { get; set; }
-    }
-    [DataContract]
-    public class GlosbePhrase
-    {
-        public string text { get; set; }
-    }
-
-    /// <summary>
+    
     /// microsoft translator access token class below
-    /// </summary>
     class Program
     {
         private static void DetectMethod(string authToken)
