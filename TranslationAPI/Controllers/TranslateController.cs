@@ -18,7 +18,7 @@ namespace TranslationAPI.Controllers
     public class TranslateController : ApiController
     {
         AdmAuthentication admAuth = new AdmAuthentication
-        ("vernaculatetranslate", "LqLdkBdQ+I/DasFZ6EKBRKvlxmaTlBQPcWKV4Srs3eQ=");
+        ("userID", "API key");
 
         // GET returns access token in case the client needs to make a call to MicrosoftTranslator
         public AdmAccessToken Get()
