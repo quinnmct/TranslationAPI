@@ -13,12 +13,12 @@ using System.Web.Http;
 using TranslationAPI.Controllers;
 using System.Media;
 using Newtonsoft.Json;
-namespace TranslationAPI.Controllers
+namespace TranslationAPI.Controllers.Api
 {
     public class TranslateController : ApiController
     {
         AdmAuthentication admAuth = new AdmAuthentication
-        ("userID", "API key");
+        ("vernaculatetranslate", "LqLdkBdQ+I/DasFZ6EKBRKvlxmaTlBQPcWKV4Srs3eQ=");
 
         // GET returns access token in case the client needs to make a call to MicrosoftTranslator
         public AdmAccessToken Get()
