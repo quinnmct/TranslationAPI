@@ -1,18 +1,21 @@
-﻿html {
+html {
     background-color: #e2e2e2;
     margin: 0;
     padding: 0;
 }
 
 body {
-    background-color: #fff;
+    /*background-color: #fff;*/
+    background-image: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGLGXVOmMO9ko5kfFt7II6VM1tXin4LiIsNVtXHE1qBUlvAmm2);
+    background-repeat:repeat;
     border-top: solid 10px #000;
     color: #333;
     font-size: .85em;
     font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
-    margin: 0;
     padding: 0;
 }
+
+
 
 a {
     color: #333;
@@ -753,4 +756,67 @@ tr.pager td {
         footer p {
             margin: 0;
         }
+}
+
+body
+{
+    font: Arial, sans-serif;
+}
+
+.menuButtons
+{
+display: block;
+width: 180px;
+margin: 0 auto;
+    
+}
+#translated li 
+{
+    border-style:ridge;
+    border-width:4px;
+    border-color:#B26B00;
+}
+.floatLeft{
+    float:left;
+    font-size:1.2em;
+    height:9px;
+    margin: 12px;
+}
+.floatRight{
+    float:right;
+    height:15px;
+    margin: 12px;
+}
+#translated li div div
+{
+    background-color: rgba(120,155,200,1);
+    
+    
+}
+.appendedButton
+{
+    height:10px;
+    margin: -3px;
+    padding: 4px;
+}
+
+#translatedWords
+{
+    list-style-type: none;
+    padding:3px;
+    margin:10px;
+}
+
+.wordDiv{
+    font-size:2em;
+    color: rgb(128, 67, 0);
+}
+.definitionDiv{
+    font-size:1.25em;
+}
+.modalButton{
+    width:95px;
+}
+.invisible {
+    display: none;
 }
